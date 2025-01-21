@@ -1,22 +1,26 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserEntity } from 'db/entities/users.entity';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { createInterface } from 'readline';
 import { createReadStream } from 'fs';
+import { AppLogger } from 'src/common/services/logger.service';
 
 @Injectable()
 export class UserService {
   private readonly BATCH_SIZE = 1000;
   constructor(
+    private readonly logger: AppLogger,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   async processCsvFromConfig(): Promise<object> {
     const filePath = process.env.CSV_FILE_PATH;
     if (!filePath) {
-      throw new BadRequestException('CSV_FILE_PATH is not defined in the environment variables');
+      throw new BadRequestException(
+        'CSV_FILE_PATH is not defined in the environment variables',
+      );
     }
-    
+
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -50,10 +54,8 @@ export class UserService {
             batch = []; // Reset the batch after insert
           }
         } catch (error) {
-          console.error('Skipping invalid record:', record, error);
+          this.logger.error('Skipping invalid record:', error.message);
         }
-        // Save user using the transaction
-        // await queryRunner.manager.save(UserEntity, user);
       }
 
       if (batch.length > 0) {
@@ -67,7 +69,7 @@ export class UserService {
       return ageDistribution;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error('Error processing CSV:', error.message);
+      this.logger.error('Error processing CSV:', error.message);
     } finally {
       // Release the query runner
       await queryRunner.release();
@@ -134,9 +136,11 @@ export class UserService {
   }
 
   private logAgeDistribution(distribution: any[]): void {
-    console.log('Age Distribution:');
+    this.logger.log('Age Distribution:');
     distribution.forEach((row) => {
-      console.log(`${row.age_group}: ${row.percentage.toFixed(2)}%`);
+      this.logger.log(
+        `${row.age_group}: ${Number(row.percentage).toFixed(2)}%`,
+      );
     });
   }
 }
