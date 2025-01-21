@@ -5,19 +5,19 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
-
 
 @Entity(ETableName.UserEntity)
 export class UserEntity {
-
   @PrimaryGeneratedColumn('increment')
   id: number;
 
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'int4' })
+  @Index()
+  @Column({ type: 'integer' })
   age: number;
 
   @Column({ type: 'jsonb', nullable: true })

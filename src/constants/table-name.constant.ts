@@ -1,3 +1,3 @@
 export const ETableName = {
-  UserEntity: 'user',
+  UserEntity: 'users',
 };

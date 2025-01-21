@@ -1,13 +1,24 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { RequestLoggerMiddleware } from 'src/common/middleware/request-logger.middleware';
 import { AppLogger } from 'src/common/services/logger.service';
+import { ConfigModule } from '@nestjs/config';
+import { UserModule } from './user/user.module';
+import envConfig from 'src/env.config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { dataSourceOptions } from 'db/data-source';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService, AppLogger],
+  imports: [
+    TypeOrmModule.forRoot(dataSourceOptions),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [envConfig],
+      envFilePath: envConfig().envFilePath,
+    }),
+    UserModule,
+  ],
+  controllers: [],
+  providers: [AppLogger],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
